@@ -188,3 +188,13 @@ class RESTRobot(object):
     def remove_move_record(self, move_name):
         """Remove the json recorded movement file"""
         return os.remove('{}.record'.format(move_name))
+    def go_to(self, request):
+        position = (request['x'],request['y'],request['z'])
+	M = np.eye(4)
+        kwargs={}
+        M[:3, 3] = position
+        inverse = np.round(poppy.chain.inverse_kinematics(M, initial_position=poppy.chain.convert_to_ik_angles(poppy.chain.joints_position), **kwargs),1)
+        inverse_ik=poppy.chain.convert_from_ik_angles(inverse)
+        for i in range(len(poppy.motors)):
+            poppy.motors[i].goto_position(inverse_ik[i],request['time'])
+        return "Ok"

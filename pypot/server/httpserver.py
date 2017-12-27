@@ -196,6 +196,10 @@ class CallPrimitiveMethodHandler(PoppyRequestHandler):
             '{}:{}'.format(primitive_name, method_name): response
         })
 
+class KinematicsRegistersHandler(PoppyRequestHandler):
+    def post(self):
+        self.restful_robot.go_to(json.loads(self.request.body.decode())) 
+
 
 class MotorsRegistersHandler(PoppyRequestHandler):
     def get(self, register_name):
@@ -248,6 +252,7 @@ class HTTPRobotServer(AbstractServer):
             (r'/primitive/(?P<primitive_name>[a-zA-Z0-9_]+)/method/list\.json', ListPrimitiveMethodsHandler),
             (r'/primitive/(?P<primitive_name>[a-zA-Z0-9_]+)/method/(?P<method_name>[a-zA-Z0-9_]+)/args\.json', CallPrimitiveMethodHandler),
             (r'/motors/register/(?P<register_name>[a-zA-Z0-9_]+)', MotorsRegistersHandler),
+            (r'/kinematics/goto', KinematicsRegistersHandler),
         ])
 
     def run(self, **kwargs):
