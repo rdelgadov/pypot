@@ -1,6 +1,7 @@
 from multiprocessing import Process, Queue
 
 from cv2 import aruco
+import numpy as np
 
 from ...robot.controller import SensorsController
 from ...robot.sensor import Sensor
@@ -9,7 +10,7 @@ from ...robot.sensor import Sensor
 class ArucoMarker(Sensor):
     registers = Sensor.registers + ['position', 'id']
 
-    def __init__(self, corners, id, size=0.018, camera_matrix, distortion):
+    def __init__(self, corners, id, camera_matrix, distortion ,size=0.018):
         """"
             Class to detect aruco markers, using like markers
             @size: real size in meters of marker, it's to important to get a better accuracy in
@@ -17,10 +18,10 @@ class ArucoMarker(Sensor):
             @camera_matrix: matrix with intrinsec parameters of camera.
             @distortion: distortion of camera.
         """
-        Sensor.__init__(self, 'aruco_marker_{}'.format(marker.id))
+        Sensor.__init__(self, 'aruco_marker_{}'.format(id))
         self.size = size
-        self.camera_matrix = camera_matrix
-        self.distortion = distortion
+        self.camera_matrix = np.float64(camera_matrix)
+        self.distortion = np.float64(distortion)
         self.position = aruco.estimatePoseSingleMarkers(corners,self.size,self.camera_matrix,self.distortion)
         self.id = id
 
@@ -51,8 +52,8 @@ class ArucoMarkerDetector(SensorsController):
             self.cameras = [getattr(self._robot, c) for c in self._names]
 
         self._markers = sum([self.detect(c.frame) for c in self.cameras], [])
-        self.sensors = [ArucoMarker(m[0],m[1],camera_matrix=self.intrinsec,distortion=self.distortion) for m in self._markers]
-
+        self.sensors = [ArucoMarker(self._markers[0][i],self._markers[1][i],self.intrinsec,self.distortion) for i in range(0,len(self._markers[0]))]
+            
     @property
     def markers(self):
         return self.sensors
@@ -70,8 +71,8 @@ class ArucoMarkerDetector(SensorsController):
                     array([id_tag1, id_tag2,..., id_tagn])
                 ]
         """
-        q.put(aruco.detectMarkers(img,self.dictionary)[0:2])
-
+	markers_detected = aruco.detectMarkers(img,self.dictionary)[0:2]
+	q.put(list(markers_detected))
     def _bg_detection(self, img):
         if not hasattr(self, 'q'):
             self.q = Queue()
