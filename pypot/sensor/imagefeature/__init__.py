@@ -2,7 +2,10 @@ try:
     from .marker import MarkerDetector
 except ImportError:
     pass
-
+try:
+    from .aruco_marker import ArucoMarkerDetector
+except ImportError:
+    pass
 try:
     from .blob import BlobDetector
 except ImportError:
