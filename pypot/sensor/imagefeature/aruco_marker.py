@@ -10,7 +10,7 @@ from ...robot.sensor import Sensor
 class ArucoMarker(Sensor):
     registers = Sensor.registers + ['position', 'id']
 
-    def __init__(self, corners, id, camera_matrix, distortion ,size=0.018):
+    def __init__(self, corners, id, camera_matrix, distortion, size):
         """"
             Class to detect aruco markers, using like markers
             @size: real size in meters of marker, it's to important to get a better accuracy in
@@ -35,13 +35,14 @@ class ArucoMarker(Sensor):
 
 
 class ArucoMarkerDetector(SensorsController):
-    def __init__(self, robot, name, cameras, intrinsec, distortion, freq, multiprocess=True, dictionary=aruco.DICT_6X6_250):
+    def __init__(self, robot, name, cameras, intrinsec, distortion, freq, size = 0.017, multiprocess=True, dictionary=aruco.DICT_6X6_250):
         SensorsController.__init__(self, None, [], freq)
 
         self.name = name
         self.dictionary = aruco.getPredefinedDictionary(dictionary)
         self._robot = robot
         self._names = cameras
+        self.size = size
         self.intrinsec = intrinsec
         self.distortion = distortion
         self.detect = (lambda img: self._bg_detection(img)
@@ -52,7 +53,7 @@ class ArucoMarkerDetector(SensorsController):
             self.cameras = [getattr(self._robot, c) for c in self._names]
 
         self._markers = sum([self.detect(c.frame) for c in self.cameras], [])
-        self.sensors = [ArucoMarker(self._markers[0][i],self._markers[1][i],self.intrinsec,self.distortion) for i in range(0,len(self._markers[0]))]
+        self.sensors = [ArucoMarker(self._markers[0][i],self._markers[1][i],self.intrinsec,self.distortion,self.size) for i in range(0,len(self._markers[0]))]
             
     @property
     def markers(self):
